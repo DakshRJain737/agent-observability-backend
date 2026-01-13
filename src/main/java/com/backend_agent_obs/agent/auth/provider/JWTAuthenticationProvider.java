@@ -1,5 +1,6 @@
 package com.backend_agent_obs.agent.auth.provider;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,18 +14,16 @@ import com.backend_agent_obs.agent.auth.util.JwtUtil;
 
 public class JWTAuthenticationProvider implements AuthenticationProvider {
 
-    private JwtUtil jwtUtil;
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
-    public JWTAuthenticationProvider(UserDetailsService userDetailsService, JwtUtil jwtUtil) {
+    public JWTAuthenticationProvider(UserDetailsService userDetailsService) {
         this.userDetailsService = userDetailsService;
-        this.jwtUtil = jwtUtil;
     }
 
     @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+    public Authentication authenticate(@NonNull Authentication authentication) throws AuthenticationException {
         String token = ((JWTAuthenticationToken) authentication).getToken();
-        String username = jwtUtil.validateAndExtractUsername(token);
+        String username = JwtUtil.validateAndExtractUsername(token);
         if(username == null) {
             throw new BadCredentialsException("Invalid JWT token");
         }
@@ -36,6 +35,6 @@ public class JWTAuthenticationProvider implements AuthenticationProvider {
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return JWTAuthenticationProvider.class.isAssignableFrom(authentication);
+        return JWTAuthenticationToken.class.isAssignableFrom(authentication);
     }
 }

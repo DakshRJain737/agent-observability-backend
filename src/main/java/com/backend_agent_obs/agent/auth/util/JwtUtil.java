@@ -20,7 +20,7 @@ public class JwtUtil {
     private static final Key key =
             Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
 
-    public String generateToken(String username, long expiryMinutes) {
+    public static String generateToken(String username, long expiryMinutes) {
         return Jwts.builder()
                 .claims()
                 .subject(username)
@@ -31,7 +31,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String validateAndExtractUsername(String token) {
+    public static String validateAndExtractUsername(String token) {
         try {
             return Jwts.parser()
                     .verifyWith((SecretKey) key)

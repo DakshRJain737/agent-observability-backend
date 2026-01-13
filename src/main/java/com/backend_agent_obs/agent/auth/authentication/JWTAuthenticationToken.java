@@ -1,14 +1,18 @@
 package com.backend_agent_obs.agent.auth.authentication;
 
+import java.util.Collection;
+
+import com.backend_agent_obs.agent.auth.util.JwtUtil;
 import org.hibernate.engine.internal.Nullability;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
 
 public class JWTAuthenticationToken extends AbstractAuthenticationToken {
 
     private final String token;
 
     public JWTAuthenticationToken(String token) {
-        super((AbstractAuthenticationBuilder<?>) null);
+        super((Collection<? extends GrantedAuthority>) null);
         this.token = token;
         setAuthenticated(false);
     }
@@ -19,7 +23,7 @@ public class JWTAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getCredentials() {
-        return null;
+        return token;
     }
 
     @Override

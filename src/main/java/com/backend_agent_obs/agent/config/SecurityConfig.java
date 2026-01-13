@@ -26,8 +26,8 @@ import com.backend_agent_obs.agent.auth.util.JwtUtil;
 @Configuration
 public class SecurityConfig {
 
-    private JwtUtil jwtUtil;
-    private UserDetailsService userDetailsService;
+    private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
 
     public SecurityConfig(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
@@ -46,7 +46,7 @@ public class SecurityConfig {
                 new JWTRefreshFilter(jwtUtil,authenticationManager);
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/register").permitAll()
+                .requestMatchers("/user/register", "/user/generate-token", "/refresh-token", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -80,6 +80,6 @@ public class SecurityConfig {
 
     @Bean
     public JWTAuthenticationProvider jwtAuthenticationProvider() {
-        return new JWTAuthenticationProvider(userDetailsService, jwtUtil);
+        return new JWTAuthenticationProvider(userDetailsService);
     }
 }

@@ -2,6 +2,7 @@ package com.backend_agent_obs.agent.auth.filter;
 
 import java.io.IOException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import tools.jackson.databind.ObjectMapper;
 
+@Slf4j
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
     private AuthenticationManager authenticationManager;
@@ -32,7 +34,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        if(!request.getServletPath().equals("/generate-token")) {
+        if(!request.getServletPath().equals("/user/generate-token")) {
             filterChain.doFilter(request,response);
             return;
         }
@@ -45,6 +47,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         if(authentication.isAuthenticated()) {
             String token = jwtUtil.generateToken(authentication.getName(), 15);
+            log.info("JWT Token for {} : {}", login.getUsername(), token);
             response.setHeader("Authorization", "Bearer " + token);
 
             String refreshToken = jwtUtil.generateToken(authentication.getName(), 7 * 24 * 60);

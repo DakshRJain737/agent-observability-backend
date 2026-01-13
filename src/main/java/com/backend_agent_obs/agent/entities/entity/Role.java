@@ -5,15 +5,16 @@ import java.util.Set;
 
 import com.backend_agent_obs.agent.enums.RoleName;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
-@Data
-@NoArgsConstructor
 @Entity
+@Getter
+@Setter
+@NoArgsConstructor
 @Table(name = "roles")
 public class Role {
 
@@ -21,7 +22,7 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Role name is required")
+    @NotNull(message = "Role name is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "role_name", unique = true, nullable = false)
     private RoleName roleName;
