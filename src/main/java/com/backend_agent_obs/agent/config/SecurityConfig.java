@@ -2,11 +2,15 @@ package com.backend_agent_obs.agent.config;
 
 import java.util.Arrays;
 
+import com.backend_agent_obs.agent.auth.filter.ApiKeyHashAuthenticationFilter;
+import com.backend_agent_obs.agent.auth.provider.ApiKeyHashAuthenticationProvider;
+import com.backend_agent_obs.agent.services.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -26,24 +30,25 @@ import com.backend_agent_obs.agent.auth.util.JwtUtil;
 @Configuration
 public class SecurityConfig {
 
-    private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final UserService userService;
 
-    public SecurityConfig(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
-        this.jwtUtil = jwtUtil;
+    public SecurityConfig(UserDetailsService userDetailsService, UserService userService) {
         this.userDetailsService = userDetailsService;
+        this.userService = userService;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   AuthenticationManager authenticationManager,
-                                                   JwtUtil jwtUtil) throws Exception {
+                                                   AuthenticationManager authenticationManager) throws Exception {
         JWTAuthenticationFilter jwtAuthFilter =
-                new JWTAuthenticationFilter(authenticationManager, jwtUtil);
+                new JWTAuthenticationFilter(authenticationManager);
         JWTValidationFilter jwtValidationFilter =
                 new JWTValidationFilter(authenticationManager);
         JWTRefreshFilter jwtRefreshFilter =
-                new JWTRefreshFilter(jwtUtil,authenticationManager);
+                new JWTRefreshFilter(authenticationManager);
+        ApiKeyHashAuthenticationFilter apiKeyHashAuthenticationFilter =
+                new ApiKeyHashAuthenticationFilter(authenticationManager);
 
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/user/register", "/user/generate-token", "/refresh-token", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -53,7 +58,8 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(jwtValidationFilter, JWTAuthenticationFilter.class)
-                .addFilterAfter(jwtRefreshFilter, JWTValidationFilter.class);
+                .addFilterAfter(jwtRefreshFilter, JWTValidationFilter.class)
+                .addFilterBefore(apiKeyHashAuthenticationFilter, JWTAuthenticationFilter.class);
         return http.build();
     }
 
@@ -74,12 +80,18 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager() {
         return new ProviderManager(Arrays.asList(
                 daoAuthenticationProvider(),
-                jwtAuthenticationProvider()
+                jwtAuthenticationProvider(),
+                apiKeyHashAuthenticationProvider()
         ));
     }
 
     @Bean
     public JWTAuthenticationProvider jwtAuthenticationProvider() {
         return new JWTAuthenticationProvider(userDetailsService);
+    }
+
+    @Bean
+    public ApiKeyHashAuthenticationProvider apiKeyHashAuthenticationProvider() {
+        return new ApiKeyHashAuthenticationProvider(userService);
     }
 }

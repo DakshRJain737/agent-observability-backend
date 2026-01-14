@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Data
-public class TraceDto {
+public class TraceResponseDto {
 
     @NotBlank(message = "Trace ID is required")
     @Size(max = 100)

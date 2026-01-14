@@ -4,14 +4,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import com.backend_agent_obs.agent.dto.entityDto.TraceDto;
+import com.backend_agent_obs.agent.dto.entityDto.TraceRequestDto;
+import com.backend_agent_obs.agent.dto.entityDto.TraceResponseDto;
+import com.backend_agent_obs.agent.entities.entity.Session;
 import com.backend_agent_obs.agent.entities.entity.Trace;
+import com.backend_agent_obs.agent.entities.entity.User;
 import com.backend_agent_obs.agent.mappers.TraceMapperImpl;
 import com.backend_agent_obs.agent.repo.SessionRespository;
 import com.backend_agent_obs.agent.repo.TraceRepository;
 import com.backend_agent_obs.agent.services.service.TraceService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,102 +29,84 @@ public class TraceServiceImpl implements TraceService {
 
     final private TraceRepository traceRepository;
     final private SessionRespository sessionRespository;
-    final private TraceMapperImpl traceMapper;
 
-    public TraceServiceImpl(TraceRepository traceRepository,
-                            SessionRespository sessionRespository,
-                            TraceMapperImpl traceMapper) {
+    public TraceServiceImpl(TraceRepository traceRepository, SessionRespository sessionRespository) {
         this.traceRepository = traceRepository;
         this.sessionRespository = sessionRespository;
-        this.traceMapper = traceMapper;
+
     }
 
     @Override
     @Transactional
-    public ResponseEntity<?> startNewTrace(TraceDto traceDto) {
-//        Optional<Session> optionalSession =
-//                sessionRespository.findBySessionId(traceDto.getSessionId());
-//        if(optionalSession.isEmpty()) {
-//            log.info("No session id as{}", traceDto.getSessionId());
-//            Session session = new Session();
-//            session.setSessionId(traceDto.getSessionId());
-//            session.setUserId(traceDto.getUserId());
-//            session.setTimestamp(LocalDateTime.now());
-//
-//            Trace trace = traceMapper.fromTraceDtoToTrace(traceDto);
-//            trace.setTraceStatus(TraceStatus.ACTIVE);
-//            // Keep for now will change to better impl
-//            trace.setEndTime(null);
-//
-//            sessionRespository.save(session);
-//            traceRepository.save(trace);
-//
-//            log.info("Session{} and Trace{} created and stored",
-//                    session.getSessionId(),
-//                    trace.getTraceId());
+    public ResponseEntity<?> startNewTrace(TraceRequestDto traceRequestDto) {
+        Optional<Session> optionalSession = sessionRespository.findBySessionId(traceRequestDto.getSessionId());
+        Trace trace = TraceMapperImpl.fromTraceRequestDtoToTrace(traceRequestDto);
+
+        if (optionalSession.isEmpty()) {
+            log.info("No session id as{}", traceRequestDto.getSessionId());
+            Session session = new Session();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            assert auth != null;
+            User user = (User) auth.getPrincipal();
+            session.setCustomer(user);
+            session.setSessionId(traceRequestDto.getSessionId());
+            session.setUserId(traceRequestDto.getUserId());
+            session.addTrace(trace);
+            trace.setSession(session);
+            sessionRespository.save(session);
+            traceRepository.save(trace);
+
+            log.info("Session{} and Trace{} created and stored", session.getSessionId(), trace.getTraceId());
 
             return ResponseEntity.ok("Session and Trace created and stored");
-//        }
-//        Trace trace = traceMapper.fromTraceDtoToTrace(traceDto);
-//        trace.setTraceStatus(TraceStatus.ACTIVE);
-//        trace.setEndTime(null);
-//        traceRepository.save(trace);
-//        log.info("Trace{} created and stored",
-//                    trace.getTraceId());
+        }
+        trace.setSession(optionalSession.get());
+        traceRepository.save(trace);
+        log.info("Trace with traceId {} created and stored(Session already exist)", trace.getTraceId());
 
-//        return ResponseEntity.ok("Trace created and stored");
+        return ResponseEntity.ok("Trace created and stored(Session already exist)");
     }
 
     @Override
     public ResponseEntity<?> getTraceDetails(String traceId) {
         Optional<Trace> trace = traceRepository.findByTraceId(traceId);
-        if(trace.isEmpty()) {
+        if (trace.isEmpty()) {
             return ResponseEntity.ok("No Trace found with trace id: " + traceId);
         }
-        return ResponseEntity.ok(trace.get());
+        TraceResponseDto traceResponseDto = TraceMapperImpl.fromTraceToTraceResponseDto(trace.get());
+        return ResponseEntity.ok(traceResponseDto);
     }
 
     @Override
+    @Transactional
     public ResponseEntity<String> endTrace(String traceId) {
-//        Optional<Trace> opTrace = traceRepository.findByTraceId(traceId);
-//        if (opTrace.isEmpty()) {
-//            return ResponseEntity.ok("No trace found with trace id: " + traceId);
-//        }
-//
-//        Trace trace = opTrace.get();
-//        trace.setEndTime(LocalDateTime.now());
-//        traceRepository.save(trace);
+        Optional<Trace> opTrace = traceRepository.findByTraceId(traceId);
+        if (opTrace.isEmpty()) {
+            return ResponseEntity.ok("No trace found with trace id: " + traceId);
+        }
+        Trace trace = opTrace.get();
+        trace.endTrace();
+        traceRepository.save(trace);
         return ResponseEntity.ok("Trace ended successfully");
     }
 
     @Override
-    public ResponseEntity<List<TraceDto>> getTracesBasedOnUser(
-            String userId,
-            String sessionId,
-            LocalDateTime startTime,
-            LocalDateTime endTime,
-            int page,
-            int size,
-            String sortBy,
-            String direction) {
+    public ResponseEntity<List<TraceResponseDto>> getTracesBasedOnUser(String userId, String sessionId, LocalDateTime startTime, LocalDateTime endTime, int page, int size, String sortBy, String direction) {
 
-//        Sort sort = direction.equalsIgnoreCase("desc")
-//                ? Sort.by(sortBy).descending()
-//                : Sort.by(sortBy).ascending();
-//
-//        Pageable pageable = PageRequest.of(page, size, sort);
-//
-//        List<TraceDto> traces = traceRepository
-//                .findTracesBySessionAndUserAndTimeRange(
-//                        sessionId, userId, startTime, endTime, pageable
-//                )
-//                .stream()
-//                .map(traceMapper::fromTraceToTraceDto)
-//                .toList();
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
 
-//        return ResponseEntity.ok(traces);
-        return ResponseEntity.ok(null);
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        List<TraceResponseDto> traces = traceRepository
+                .findTracesBySessionAndUserAndTimeRange(
+                        sessionId, userId, startTime, endTime, pageable
+                )
+                .stream()
+                .map(TraceMapperImpl::fromTraceToTraceResponseDto)
+                .toList();
+
+        return ResponseEntity.ok(traces);
     }
-
-
 }

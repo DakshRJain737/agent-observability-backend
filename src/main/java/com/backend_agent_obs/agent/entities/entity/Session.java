@@ -45,9 +45,7 @@ public class Session extends BaseEntity implements ISession {
     // "latency", "cost", "tokens"
     // correct this
     @Enumerated(EnumType.STRING)
-    private MetricsInfo type;
-    private Double value;
-    // when the metrics was calculated
+    private MetricsInfo type = MetricsInfo.COST;
 
     @NotNull(message = "Start time is required")
     @Column(name = "start_time", nullable = false)

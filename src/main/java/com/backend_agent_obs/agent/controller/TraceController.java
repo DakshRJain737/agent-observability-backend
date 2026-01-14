@@ -3,7 +3,8 @@ package com.backend_agent_obs.agent.controller;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.backend_agent_obs.agent.dto.entityDto.TraceDto;
+import com.backend_agent_obs.agent.dto.entityDto.TraceRequestDto;
+import com.backend_agent_obs.agent.dto.entityDto.TraceResponseDto;
 import com.backend_agent_obs.agent.mappers.TraceMapperImpl;
 import com.backend_agent_obs.agent.services.service.TraceService;
 import org.springframework.http.ResponseEntity;
@@ -13,31 +14,30 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class TraceController {
 
-    final private TraceMapperImpl traceMapper;
     final private TraceService traceService;
 
-    public TraceController(TraceMapperImpl traceMapper, TraceService traceService) {
-        this.traceMapper = traceMapper;
+    public TraceController(TraceService traceService) {
         this.traceService = traceService;
     }
 
-    @PostMapping("/traces")
-    public ResponseEntity<?> startNewTrace(@RequestBody TraceDto traceDto) {
-        return traceService.startNewTrace(traceDto);
+    @PostMapping("/data/traces")
+    public ResponseEntity<?> startNewTrace(@RequestBody TraceRequestDto traceRequestDto) {
+        return traceService.startNewTrace(traceRequestDto);
     }
 
+//    @PreAuthorize(value = "hasRole='USER'")
     @GetMapping("/traces/{traceId}")
     public ResponseEntity<?> getTraceDetails(@PathVariable String traceId) {
         return traceService.getTraceDetails(traceId);
     }
 
-    @PutMapping("/traces/{traceId}/end")
+    @PutMapping("/traces/data/{traceId}/end")
     public ResponseEntity<String> endTrace(@PathVariable String traceId) {
         return traceService.endTrace(traceId);
     }
 
     @GetMapping("/traces")
-    public ResponseEntity<List<TraceDto>> getTracesBasedOnUser(
+    public ResponseEntity<List<TraceResponseDto>> getTracesParticularToUser(
             @RequestParam String userId,
             @RequestParam String sessionId,
             @RequestParam LocalDateTime startTime,

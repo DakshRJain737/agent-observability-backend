@@ -2,6 +2,7 @@ package com.backend_agent_obs.agent.auth.filter;
 
 import java.io.IOException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,9 +15,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+@Slf4j
 public class JWTValidationFilter extends OncePerRequestFilter {
 
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
     public JWTValidationFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
@@ -26,6 +28,13 @@ public class JWTValidationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+
+        if (SecurityContextHolder.getContext().getAuthentication() != null
+                && SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
+            log.info("Already authenticated, skipping JWT validation");
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String token = extractJwtFromRequest(request);
         if(token != null) {

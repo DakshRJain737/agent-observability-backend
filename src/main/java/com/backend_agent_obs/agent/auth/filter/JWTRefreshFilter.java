@@ -17,11 +17,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class JWTRefreshFilter extends OncePerRequestFilter {
 
-    private JwtUtil jwtUtil;
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
-    public JWTRefreshFilter(JwtUtil jwtUtil, AuthenticationManager authenticationManager) {
-        this.jwtUtil = jwtUtil;
+    public JWTRefreshFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
     }
 
@@ -44,7 +42,7 @@ public class JWTRefreshFilter extends OncePerRequestFilter {
         Authentication authResult = authenticationManager.authenticate(jwtAuthToken);
 
         if(authResult.isAuthenticated()) {
-            String newToken = jwtUtil.generateToken(authResult.getName(), 15);
+            String newToken = JwtUtil.generateToken(authResult.getName(), 15);
             response.setHeader("Authorization", "Bearer " + newToken);
         }
 

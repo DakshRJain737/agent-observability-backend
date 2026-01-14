@@ -2,7 +2,6 @@ package com.backend_agent_obs.agent.services.serviceImpl;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import com.backend_agent_obs.agent.auth.util.ApiKeyHashUtil;
 import com.backend_agent_obs.agent.dto.userDto.UserDetailsDto;
@@ -65,6 +64,11 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         log.info("User registered with username {}", user.getUsername());
         return ResponseEntity.ok().body("User registered successfully");
+    }
+
+    @Override
+    public User loadUserByApiKeyHash(String apiKeyHash) throws UsernameNotFoundException {
+        return userRepository.findByApiKeyHash(apiKeyHash).orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     @Override
