@@ -10,7 +10,7 @@ import com.backend_agent_obs.agent.entities.entity.Session;
 import com.backend_agent_obs.agent.entities.entity.Trace;
 import com.backend_agent_obs.agent.entities.entity.User;
 import com.backend_agent_obs.agent.mappers.TraceMapperImpl;
-import com.backend_agent_obs.agent.repo.SessionRespository;
+import com.backend_agent_obs.agent.repo.SessionRepository;
 import com.backend_agent_obs.agent.repo.TraceRepository;
 import com.backend_agent_obs.agent.services.service.TraceService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,32 +28,30 @@ import org.springframework.transaction.annotation.Transactional;
 public class TraceServiceImpl implements TraceService {
 
     final private TraceRepository traceRepository;
-    final private SessionRespository sessionRespository;
+    final private SessionRepository sessionRepository;
 
-    public TraceServiceImpl(TraceRepository traceRepository, SessionRespository sessionRespository) {
+    public TraceServiceImpl(TraceRepository traceRepository, SessionRepository sessionRepository) {
         this.traceRepository = traceRepository;
-        this.sessionRespository = sessionRespository;
+        this.sessionRepository = sessionRepository;
 
     }
 
     @Override
     @Transactional
     public ResponseEntity<?> startNewTrace(TraceRequestDto traceRequestDto) {
-        Optional<Session> optionalSession = sessionRespository.findBySessionId(traceRequestDto.getSessionId());
+        Optional<Session> optionalSession = sessionRepository.findBySessionId(traceRequestDto.getSessionId());
         Trace trace = TraceMapperImpl.fromTraceRequestDtoToTrace(traceRequestDto);
 
         if (optionalSession.isEmpty()) {
             log.info("No session id as{}", traceRequestDto.getSessionId());
-            Session session = new Session();
+            Session session = TraceMapperImpl.fromTraceRequestDtoToSession(traceRequestDto);
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             assert auth != null;
             User user = (User) auth.getPrincipal();
             session.setCustomer(user);
-            session.setSessionId(traceRequestDto.getSessionId());
-            session.setUserId(traceRequestDto.getUserId());
             session.addTrace(trace);
             trace.setSession(session);
-            sessionRespository.save(session);
+            sessionRepository.save(session);
             traceRepository.save(trace);
 
             log.info("Session{} and Trace{} created and stored", session.getSessionId(), trace.getTraceId());

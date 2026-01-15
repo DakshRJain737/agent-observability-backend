@@ -31,7 +31,7 @@ public class TraceController {
         return traceService.getTraceDetails(traceId);
     }
 
-    @PutMapping("/traces/data/{traceId}/end")
+    @PutMapping("/data/traces/{traceId}/end")
     public ResponseEntity<String> endTrace(@PathVariable String traceId) {
         return traceService.endTrace(traceId);
     }

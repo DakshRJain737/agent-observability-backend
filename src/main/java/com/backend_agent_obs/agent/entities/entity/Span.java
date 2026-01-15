@@ -136,8 +136,12 @@ public class Span extends BaseEntity implements ISpan {
             throw new IllegalStateException("End time cannot be before start time");
         }
         if (totalTokens != null && inputTokens != null && outputTokens != null) {
-            if (!totalTokens.equals(inputTokens + outputTokens)) {
-                throw new IllegalStateException(String.format("Total tokens (%d) must equal input (%d) + output (%d)", totalTokens, inputTokens, outputTokens));
+            int expectedTotal = inputTokens + outputTokens;
+            if (!totalTokens.equals(expectedTotal)) {
+                throw new IllegalStateException(
+                        String.format("Total tokens (%d) must equal input (%d) + output (%d)",
+                                totalTokens, inputTokens, outputTokens)
+                );
             }
         }
         if (status == SpanStatus.ERROR && (errorType == null || errorMessage == null)) {
@@ -150,8 +154,11 @@ public class Span extends BaseEntity implements ISpan {
     }
 
     public void completeSpan() {
+        if (this.endTime != null) {
+            throw new IllegalStateException("Span already completed");
+        }
         if (this.status == SpanStatus.ERROR) {
-            return;
+            return; // Don't override error status
         }
         this.status = SpanStatus.SUCCESS;
         this.endTime = Instant.now();
@@ -172,17 +179,33 @@ public class Span extends BaseEntity implements ISpan {
     }
 
     public void addChildSpan(Span child) {
-        childSpans.add(child);
-        child.setParentSpan(this);
+        if (child == null) {
+            throw new IllegalArgumentException("Child span cannot be null");
+        }
+        if (!childSpans.contains(child)) {
+            childSpans.add(child);
+            child.setParentSpan(this);
+        }
     }
 
     public void removeChildSpan(Span child) {
-        childSpans.remove(child);
-        child.setParentSpan(null);
+        if (child != null && childSpans.remove(child)) {
+            child.setParentSpan(null);
+        }
     }
 
     @Override
     public String getUserId() {
-        return trace.getSession().getUserId();
+        return trace != null && trace.getSession() != null
+                ? trace.getSession().getUserId()
+                : null;
+    }
+
+    public boolean isCompleted() {
+        return this.endTime != null;
+    }
+
+    public boolean hasError() {
+        return this.status == SpanStatus.ERROR;
     }
 }

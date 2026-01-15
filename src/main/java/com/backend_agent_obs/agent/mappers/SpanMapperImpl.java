@@ -1,61 +1,91 @@
 package com.backend_agent_obs.agent.mappers;
 
-import com.backend_agent_obs.agent.dto.entityDto.SpanDto;
+import com.backend_agent_obs.agent.dto.entityDto.ErrorDto;
+import com.backend_agent_obs.agent.dto.entityDto.SpanRequestDto;
+import com.backend_agent_obs.agent.dto.entityDto.SpanResponseDto;
 import com.backend_agent_obs.agent.entities.entity.Span;
+import com.backend_agent_obs.agent.entities.entity.Trace;
+import com.backend_agent_obs.agent.enums.SpanStatus;
 
 public class SpanMapperImpl {
 
-    public static SpanDto fromSpanToSpanDto(Span span) {
-        SpanDto spanDto = new SpanDto();
-        spanDto.setSpanId(span.getSpanId());
-        spanDto.setParentSpanId(span.getParentSpan().getSpanId());
-        spanDto.setTraceId(span.getTrace().getTraceId());
-        spanDto.setSessionId(span.getTrace().getSession().getSessionId());
-        spanDto.setName(span.getName());
-        spanDto.setModel(span.getModel());
-        spanDto.setType(span.getType());
-        spanDto.setInput(span.getInput());
-        spanDto.setOutput(span.getOutput());
-        spanDto.setInputTokens(span.getInputTokens());
-        spanDto.setOutputTokens(span.getOutputTokens());
-        spanDto.setTotalTokens(span.getTotalTokens());
-        spanDto.setCost(span.getCost());
-        spanDto.setLatencyMs(span.getLatencyMs());
-        spanDto.setStartTime(span.getStartTime());
-        spanDto.setEndTime(span.getEndTime());
-        spanDto.setError(ErrorMapperImpl.fromErrorDetailsToErrorDto(span.getErrorType(), span.getErrorMessage(), span.getErrorStackTrace()));
-        spanDto.setStatus(span.getStatus());
-        spanDto.setVersion(span.getVersion());
-        spanDto.setEnvironment(span.getEnvironment());
-        spanDto.setMetadata(span.getMetadata());
-
-        return spanDto;
+    public static SpanResponseDto fromSpanToSpanResponseDto(Span span) {
+        SpanResponseDto spanResponseDto = new SpanResponseDto();
+        spanResponseDto.setSpanId(span.getSpanId());
+        spanResponseDto.setName(span.getName());
+        spanResponseDto.setModel(span.getModel());
+        spanResponseDto.setType(span.getType());
+        spanResponseDto.setInput(span.getInput());
+        spanResponseDto.setOutput(span.getOutput());
+        spanResponseDto.setInputTokens(span.getInputTokens());
+        spanResponseDto.setOutputTokens(span.getOutputTokens());
+        spanResponseDto.setTotalTokens(span.getTotalTokens());
+        spanResponseDto.setCost(span.getCost());
+        spanResponseDto.setLatencyMs(span.getLatencyMs());
+        spanResponseDto.setStartTime(span.getStartTime());
+        spanResponseDto.setEndTime(span.getEndTime());
+        if (span.getErrorMessage() != null) {
+            ErrorDto errorDto = new ErrorDto(span.getErrorType(),span.getErrorMessage(),span.getErrorStackTrace());
+            spanResponseDto.setError(errorDto);
+        }
+        else {
+            spanResponseDto.setError(null);
+        }
+        spanResponseDto.setSpanStatus(span.getStatus().getDescription());
+        spanResponseDto.setVersion(span.getVersion());
+        spanResponseDto.setEnvironment(span.getEnvironment());
+        spanResponseDto.setMetadata(span.getMetadata());
+        if(span.getTrace() != null) {
+            spanResponseDto.setTraceId(span.getTrace().getTraceId());
+            if(span.getTrace().getSession() != null) {
+                spanResponseDto.setSessionId(span.getTrace().getSession().getSessionId());
+            }
+        }
+        return spanResponseDto;
     }
 
-    public static Span fromSpanDtoToSpan(SpanDto spanDto) {
+    public static Span fromSpanRequestDtoToSpan(SpanRequestDto spanRequestDto) {
         Span span = new Span();
-        span.setSpanId(spanDto.getSpanId());
+        span.setSpanId(spanRequestDto.getSpanId());
         // parentSpan, traceId, sessionId set in service
-        span.setName(spanDto.getName());
-        span.setModel(spanDto.getModel());
-        span.setType(spanDto.getType());
-        span.setInput(spanDto.getInput());
-        span.setOutput(spanDto.getOutput());
-        span.setInputTokens(spanDto.getInputTokens());
-        span.setOutputTokens(spanDto.getOutputTokens());
-        span.setTotalTokens(spanDto.getTotalTokens());
-        span.setCost(spanDto.getCost());
-        span.setLatencyMs(spanDto.getLatencyMs());
-        span.setStartTime(spanDto.getStartTime());
-        span.setEndTime(spanDto.getEndTime());
-        span.setErrorType(spanDto.getError().getErrorType());
-        span.setErrorMessage(spanDto.getError().getErrorMessage());
-        span.setErrorStackTrace(spanDto.getError().getErrorStackTrace());
-        span.setStatus(spanDto.getStatus());
-        span.setVersion(spanDto.getVersion());
-        span.setEnvironment(spanDto.getEnvironment());
-        span.setMetadata(spanDto.getMetadata());
+        span.setName(spanRequestDto.getName());
+        span.setModel(spanRequestDto.getModel());
+        span.setType(spanRequestDto.getType());
+        span.setInput(spanRequestDto.getInput());
+        span.setOutput(spanRequestDto.getOutput());
+        span.setInputTokens(spanRequestDto.getInputTokens());
+        span.setOutputTokens(spanRequestDto.getOutputTokens());
+        span.setTotalTokens(spanRequestDto.getTotalTokens());
+        span.setCost(spanRequestDto.getCost());
+        span.setLatencyMs(spanRequestDto.getLatencyMs());
+        span.setStartTime(spanRequestDto.getStartTime());
+        if (spanRequestDto.getError() != null) {
+            span.setErrorType(spanRequestDto.getError().getErrorType());
+            span.setErrorMessage(spanRequestDto.getError().getErrorMessage());
+            span.setErrorStackTrace(spanRequestDto.getError().getErrorStackTrace());
+        }
+
+        if (spanRequestDto.getSpanStatus() != null) {
+            span.setStatus(SpanStatus.valueOf(spanRequestDto.getSpanStatus().toUpperCase()));
+        } else if (spanRequestDto.getError() != null && spanRequestDto.getError().getErrorType() != null) {
+            span.setStatus(SpanStatus.ERROR);
+        }
+
+        span.setVersion(spanRequestDto.getVersion());
+        span.setEnvironment(spanRequestDto.getEnvironment());
+        span.setMetadata(spanRequestDto.getMetadata());
 
         return span;
+    }
+
+    public static Trace fromSpanRequestDtoToTrace(SpanRequestDto spanRequestDto) {
+        if (spanRequestDto == null) return null;
+
+        Trace trace = new Trace();
+        trace.setTraceId(spanRequestDto.getTraceId());
+        trace.setName(spanRequestDto.getName());
+        trace.setMetadata(spanRequestDto.getMetadata());
+        return trace;
+        // sessionId, customer set in service
     }
 }
