@@ -50,6 +50,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         Authentication authentication = authenticationManager.authenticate(authToken);
 
         if(authentication.isAuthenticated()) {
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             String token = JwtUtil.generateToken(authentication.getName(), 15);
             log.info("JWT Token for {} : {}", login.getUsername(), token);
             response.setHeader("Authorization", "Bearer " + token);

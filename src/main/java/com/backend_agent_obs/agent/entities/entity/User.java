@@ -114,6 +114,17 @@ public class User extends BaseEntity implements UserDetails {
 // | `/api/traces`               | GET    | List traces (with filters) | Query params: `userId`, `sessionId`, `date_from`, `date_to`                 |
 // | `/api/traces/:traceId/end` | POST   | End a trace                | `{}` (just marks trace ended)                                                 |
 
+
+// All done
+
+// Add on that can be done
+// | Endpoint                    | Method | Description |
+// | --------------------------- | ------ | ------------|
+// | `/api/failTrace`            | PUT   | Fail a trace |
+// | `/api/removeSpan`           | PUT   | Remove a span|
+
+
+
 // ---
 
 // ## **2. Span APIs (Individual operations inside a trace)**
@@ -125,14 +136,25 @@ public class User extends BaseEntity implements UserDetails {
 // | `/api/spans/:span_id` | GET    | Get details of a span              | Path param `span_id`                                                                                                                                          |
 // | `/api/spans`          | GET    | List spans (filters)               | Query params: `traceId`, `sessionId`, `userId`, `status`, `date_from`, `date_to`                                                                           |
 
+// All done only last left
+// Add on that can be done
+// | Endpoint                    | Method | Description |
+// | --------------------------- | ------ | ------------|
+// | `/api/completeSpan`         | PUT   | Completee a span |
+// | `/api/markError`            | PUT   | Mark error on a span|
+// | `/api/removeChild`          | PUT   | Remove child on a span|
+
+
 // ---
 
-// ## **3. Session APIs (Optional, if you want session-level grouping)**
+// ## **3. Session APIs
 
 // | Endpoint                    | Method | Description                          | Request Body / Params                           |
 // | --------------------------- | ------ | ------------------------------------ | ----------------------------------------------- |
 // | `/api/sessions/:sessionId` | GET    | Get session details & related traces | Path param `sessionId`                         |
 // | `/api/sessions`             | GET    | List sessions                        | Query params: `userId`, `date_from`, `date_to` |
+
+// Pending, Not necessry
 
 // ---
 
@@ -145,13 +167,15 @@ public class User extends BaseEntity implements UserDetails {
 // | `/api/metrics/tokens`  | GET    | Token usage stats                 | Query params similar to above                                          |
 // | `/api/errors`          | GET    | List failed spans with errors     | Query params: `status=error`, `userId`, `traceId`, `date_from`       |
 
+// Costs, Latency and totalTokens ---> together done, should be enhanced
+
 // ---
 
 // ## **5. Admin / Maintenance APIs (Optional)**
 
 // | Endpoint                     | Method | Description                            |
 // | ---------------------------- | ------ | -------------------------------------- |
-// | `/api/persisted-spans/clear` | POST   | Clear old persisted spans from disk/db |
+// | `/api/persisted-spans/cmodellear` | POST   | Clear old persisted spans from disk/db |
 // | `/api/health`                | GET    | Simple health check                    |
 
 

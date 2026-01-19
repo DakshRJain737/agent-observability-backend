@@ -17,9 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,7 +48,10 @@ public class TraceServiceImpl implements TraceService {
             log.info("No session id as{}", traceRequestDto.getSessionId());
             Session session = TraceMapperImpl.fromTraceRequestDtoToSession(traceRequestDto);
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            assert auth != null;
+            if (auth == null || !(auth.getPrincipal() instanceof UserDetails)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
             User user = (User) auth.getPrincipal();
             session.setCustomer(user);
             session.addTrace(trace);
