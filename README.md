@@ -18,4 +18,4 @@ spring.security.user.password=admin
 ```
 Before running the application, create a database in postgres named ```agent``` or set:
 
-```spring.jpa.hibernate.ddl-auto=update=create```
+```spring.jpa.hibernate.ddl-auto=create```
