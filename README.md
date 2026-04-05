@@ -1,5 +1,8 @@
 # agent-observability-backend
 
+# Python SDK
+https://github.com/DakshRJain737/ai-agent-observatory-sdk
+
 ## application.properties
 In the /agent-observatory/agent/src/main/ make a folder named resources and create an application.properties file and the following content to it.
 
